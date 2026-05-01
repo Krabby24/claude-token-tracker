@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Claude Token Tracker</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0b0e;--bg2:#111318;--bg3:#1a1d25;
+  --border:#1e2230;--border2:#2a2f40;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#4b5568;
+  --accent:#f97316;--green:#22c55e;--yellow:#eab308;--red:#ef4444;
+}
+body{width:380px;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:13px;line-height:1.5;overflow-x:hidden}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:13px 16px;display:flex;align-items:center;gap:10px}
+.logo-icon{width:28px;height:28px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#000;flex-shrink:0}
+.logo-title{font-size:13px;font-weight:600}
+.logo-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
+.plan-row{display:flex;gap:5px;padding:10px 16px 0}
+.plan-btn{flex:1;padding:6px 2px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--text3);font-family:'IBM Plex Mono',monospace;font-size:10px;cursor:pointer;text-align:center;transition:all .15s;letter-spacing:.02em}
+.plan-btn:hover{color:var(--text2);border-color:var(--text3)}
+.plan-btn[data-plan="free"].active  {border-color:#6b7280;color:#6b7280;background:rgba(107,114,128,.15)}
+.plan-btn[data-plan="pro"].active   {border-color:#f97316;color:#f97316;background:rgba(249,115,22,.15)}
+.plan-btn[data-plan="max5"].active  {border-color:#8b5cf6;color:#8b5cf6;background:rgba(139,92,246,.15)}
+.plan-btn[data-plan="max20"].active {border-color:#ec4899;color:#ec4899;background:rgba(236,72,153,.15)}
+#main-content{padding:0}
+.card{margin:10px 16px 0;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:13px}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.card-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3)}
+.status-row{display:flex;align-items:center;gap:5px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.dot{width:6px;height:6px;border-radius:50%}
+.dot.live{background:#22c55e;box-shadow:0 0 6px #22c55e;animation:blink 2s infinite}
+.dot.idle{background:var(--text3)}
+.badge{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:1px 6px;border-radius:3px}
+.badge.est{background:rgba(234,179,8,.15);color:#eab308}
+.gauge-row{display:flex;align-items:center;gap:14px}
+.gauge-wrap{position:relative;width:76px;height:76px;flex-shrink:0}
+.gauge-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.gauge-pct{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;line-height:1}
+.gauge-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text3)}
+.stats{flex:1;display:flex;flex-direction:column;gap:6px}
+.stat-row{display:flex;justify-content:space-between;align-items:baseline}
+.stat-lbl{font-size:11px;color:var(--text2)}
+.stat-val{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;color:var(--text)}
+.bar-wrap{margin-top:10px}
+.bar-meta{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text3);margin-bottom:3px}
+.bar-bg{height:4px;background:var(--border2);border-radius:2px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;transition:width .5s ease}
+.win-time{display:flex;justify-content:space-between;margin-top:9px}
+.win-time span{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3)}
+/* Sparkline */
+.spark-wrap{margin:10px 16px 0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.spark-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.spark-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3)}
+.spark-svg{width:100%;height:36px;display:block}
+/* Timer */
+.timer-card{display:flex;align-items:center;justify-content:space-between;margin:10px 16px 0;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px}
+.timer-lbl{font-size:11px;color:var(--text2)}
+.timer-val{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;letter-spacing:.05em}
+.timer-val.urgent{color:var(--red)}
+/* Conversations */
+.section-lbl{padding:9px 16px 4px;display:flex;align-items:center;gap:8px}
+.section-lbl span{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);white-space:nowrap}
+.section-line{flex:1;height:1px;background:var(--border)}
+.conv-list{padding:0 16px;display:flex;flex-direction:column;gap:4px;max-height:110px;overflow-y:auto}
+.conv-list::-webkit-scrollbar{width:3px}
+.conv-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.conv-item{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px}
+.conv-id{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conv-toks{display:flex;gap:7px}
+.tok-in{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#60a5fa}
+.tok-out{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#a78bfa}
+.tok-tot{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2)}
+/* Footer */
+.footer{padding:10px 16px 13px;display:flex;gap:7px;border-top:1px solid var(--border);margin-top:10px}
+.btn{flex:1;padding:7px 8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-family:'IBM Plex Mono',monospace;font-size:10px;cursor:pointer;transition:all .15s;text-align:center;letter-spacing:.04em}
+.btn:hover{background:var(--bg2);color:var(--text);border-color:var(--text3)}
+.btn.danger{color:var(--red);border-color:rgba(239,68,68,.3)}
+.btn.danger:hover{background:rgba(239,68,68,.1);border-color:var(--red)}
+.btn.primary{color:var(--accent);border-color:rgba(249,115,22,.3)}
+.btn.primary:hover{background:rgba(249,115,22,.1);border-color:var(--accent)}
+.btn.sm{flex:0 0 34px;padding:7px 0}
+.empty-card{margin:10px 16px 0;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;font-size:12px;color:var(--text2);line-height:1.7}
+.method-row{padding:4px 16px 0;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text3)}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo-icon">CT</div>
+  <div>
+    <div class="logo-title">Claude Token Tracker</div>
+    <div class="logo-sub">5-hour window monitor</div>
+  </div>
+</div>
+<div class="plan-row">
+  <button class="plan-btn" data-plan="free">FREE</button>
+  <button class="plan-btn" data-plan="pro">PRO</button>
+  <button class="plan-btn" data-plan="max5">MAX 5×</button>
+  <button class="plan-btn" data-plan="max20">MAX 20×</button>
+</div>
+<div id="main-content"></div>
+<div class="footer">
+  <button class="btn danger" id="btn-reset">↺ Reset</button>
+  <button class="btn primary" id="btn-start">▶ Start Window</button>
+  <button class="btn sm" id="btn-info" title="BPE estimate — claude.ai hides real token counts">?</button>
+</div>
+<script src="popup.js"></script>
+</body>
+</html>
