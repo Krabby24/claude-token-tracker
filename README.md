@@ -11,7 +11,7 @@
 [![Chrome](https://img.shields.io/badge/Chrome-supported-green.svg)]()
 [![Edge](https://img.shields.io/badge/Edge-supported-green.svg)]()
 
-![Popup screenshot](docs/screenshot.png)
+![Popup screenshot](docs/Screenshot.png)
 
 </div>
 
